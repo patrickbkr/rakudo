@@ -27,11 +27,29 @@ rreadlink() (
   fi
 )
 
+# Taken from https://unix.stackexchange.com/a/10065/396163
+# The script is meant to be evaled. So no TTY connected. Thus
+# disable the TTY check.
+#if test -t 1; then
+    ncolors=$(tput colors)
+    if test -n "$ncolors" && test $ncolors -ge 8; then
+        normal="$(tput sgr0)"
+        black="$(tput setaf 0)"
+        red="$(tput setaf 1)"
+        green="$(tput setaf 2)"
+        yellow="$(tput setaf 3)"
+        blue="$(tput setaf 4)"
+        magenta="$(tput setaf 5)"
+        cyan="$(tput setaf 6)"
+        white="$(tput setaf 7)"
+    fi
+#fi
+
 EXEC=$(rreadlink "$0")
 DIR=$(dirname $(dirname "$EXEC"))
 
-echo "echo '                           Adding Rakudo to PATH';"
-echo "echo '                          =======================';"
+echo "echo '                             ${cyan}Adding Rakudo to PATH';"
+echo "echo '                            =======================${normal}';"
 echo "echo '';"
 
 NEW_PATH=$PATH
@@ -58,11 +76,11 @@ else
 fi
 
 echo "echo '';
-echo '================================================================================';
-echo ' =========                                                             __   __';
-echo '  ||_|_||                =============================                (  \,/  )';
-echo '  || # ||                 Welcome to the Raku Console                  \_ O _/';
-echo '  || # ||                =============================                 (_/ \_)';
+echo '${cyan}================================================================================${normal}';
+echo ' =========               ${cyan}                             ${normal}                 __   __';
+echo '  ||_|_||                ${cyan}=============================${normal}                (  \,/  )';
+echo '  || # ||                ${cyan} Welcome to the ${green}R${red}a${yellow}k${blue}u${cyan} Console ${normal}                 \_ O _/';
+echo '  || # ||                ${cyan}=============================${normal}                 (_/ \_)';
 echo '';
 echo 'This console has all the tools available you need to get started using Raku.';
 echo '';
@@ -70,23 +88,23 @@ echo 'Rakudo provides an interactive command line interpreter (a so called Read 
 echo 'Print Loop, REPL for short) you can use to quickly try out pieces of Raku code.';
 echo 'Start it by typing:';
 echo '';
-echo '    raku.exe';
+echo '    ${green}raku.exe${normal}';
 echo '';
 echo 'If you already have a Raku program in a file, you can run it by typing:';
 echo '';
-echo '    raku.exe path\to\my\program.raku';
+echo '    ${green}raku.exe path\to\my\program.raku${normal}';
 echo '';
 echo 'To install additional modules you can use the Zef module manager:';
 echo '';
-echo '    zef install Some::Module';
+echo '    ${green}zef install Some::Module${normal}';
 echo '';
-echo 'https://rakudo.org/           - The home of this implementation of Raku.';
-echo 'https://raku.land/            - Go here to browse for Raku modules.';
-echo 'https://docs.raku.org/        - The Raku documentation.';
-echo 'https://web.libera.chat/#raku - The Raku user chat. Talk to us!';
+echo '${magenta}https://rakudo.org/${normal}           - The home of this implementation of Raku.';
+echo '${magenta}https://raku.land/${normal}            - Go here to browse for Raku modules.';
+echo '${magenta}https://docs.raku.org/${normal}        - The Raku documentation.';
+echo '${magenta}https://web.libera.chat/#raku${normal} - The Raku user chat. Talk to us!';
 echo '';
 echo '                              Happy hacking!';
 echo '';
-echo '================================================================================';
+echo '${cyan}================================================================================${normal}';
 echo '';
 "

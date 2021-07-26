@@ -49,8 +49,8 @@ function activate_buildtools() {
 }
 
 function add_to_path() {
-    Write-Host "                           Adding Rakudo to PATH"
-    Write-Host "                          ======================="
+    Write-Host "                             Adding Rakudo to PATH"
+    Write-Host "                            ======================="
     Write-Host ""
 
     $done_stuff = $null
@@ -80,37 +80,48 @@ function add_to_path() {
 activate_buildtools
 add_to_path
 
-Write-Host @'
+Write-Host -ForegroundColor cyan @'
 
 ================================================================================
+'@
+Write-Host -NoNewline @'
  =========                                                             __   __
-  ||_|_||                =============================                (  \,/  )
-  || # ||                 Welcome to the Raku Console                  \_ O _/
-  || # ||                =============================                 (_/ \_)
+  ||_|_||                '@
+Write-Host -NoNewline -ForegroundColor cyan '============================='
+Write-Host -NoNewline @'                (  \,/  )
+  || # ||                 '@
+Write-Host -NoNewline -ForegroundColor cyan 'Welcome to the Raku Console'
+Write-Host -NoNewline @'                  \_ O _/
+  || # ||                '@
+Write-Host -NoNewline -ForegroundColor cyan '============================='
+Write-Host @'                 (_/ \_)
 
 This console has all the tools available you need to get started using Raku.
 
 Rakudo provides an interactive command line interpreter (a so called Read Eval
 Print Loop, REPL for short) you can use to quickly try out pieces of Raku code.
 Start it by typing:
-
-    raku.exe
-
+'@
+Write-Host -ForegroundColor green '    raku.exe'
+Write-Host @'
 If you already have a Raku program in a file, you can run it by typing:
-
-    raku.exe path\to\my\program.raku
-
+'@
+Write-Host -ForegroundColor green '    raku.exe path\to\my\program.raku'
+Write-Host @'
 To install additional modules you can use the Zef module manager:
-
-    zef install Some::Module
-
-https://rakudo.org/           - The home of this implementation of Raku.
-https://raku.land/            - Go here to browse for Raku modules.
-https://docs.raku.org/        - The Raku documentation.
-https://web.libera.chat/#raku - The Raku user chat. Talk to us!
+'@
+Write-Host -ForegroundColor green '    zef install Some::Module'
+Write-Host ''
+Write-Host -NoNewline -ForegroundColor magenta 'https://rakudo.org/'
+Write-Host '           - The home of this implementation of Raku.'
+Write-Host -NoNewline -ForegroundColor magenta 'https://raku.land/'
+Write-Host '            - Go here to browse for Raku modules.'
+Write-Host -NoNewline -ForegroundColor magenta 'https://docs.raku.org/'
+Write-Host '        - The Raku documentation.'
+Write-Host -NoNewline -ForegroundColor magenta 'https://web.libera.chat/#raku'
+Write-Host @' - The Raku user chat. Talk to us!
 
                               Happy hacking!
-
-================================================================================
-
 '@
+Write-Host -ForegroundColor cyan '================================================================================'
+Write-Host ''
