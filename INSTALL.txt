@@ -1,3 +1,5 @@
+Foo bar
+
 More changes!
 Some boring change.
   Build requirements (Installing from source)
