@@ -3,6 +3,7 @@
 Bla
 Blu
 Blub
+Foo
 
 This is Rakudo, a Raku Programming Language compiler for the MoarVM, JVM and Javascript virtual machines.
 
