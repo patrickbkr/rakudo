@@ -1,5 +1,7 @@
 # Build requirements (Installing from source)
 
+There needs to be some text here.
+
 For building Rakudo you need at least a C compiler, a "make" utility, and
 Perl 5.10.1 or newer on all platforms except Windows which needs Perl 5.22.
 To automatically obtain and build MoarVM as well as NQP, you may also need a
