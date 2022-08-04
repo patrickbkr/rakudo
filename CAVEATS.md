@@ -2,6 +2,8 @@
 
 ## Windows
 
+Dis no good!
+
 It should be possible to build Rakudo with either MinGW or MSVC. The
 [official releases](https://rakudo.org/downloads) are built using MSVC.
 
