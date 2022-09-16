@@ -212,6 +212,7 @@ src/core.c/Distribution/Hash.rakumod
 src/core.c/Distribution/Path.rakumod
 src/core.c/Distribution/Resource.rakumod
 src/core.c/Distribution/Resources.rakumod
+src/core.c/Distribution/Utils.rakumod
 src/core.c/CompUnit/DependencySpecification.rakumod
 src/core.c/CompUnit/Handle.rakumod
 src/core.c/CompUnit/Loader.rakumod
