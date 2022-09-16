@@ -93,7 +93,7 @@ class CompUnit::PrecompilationRepository::Default
             self.may-precomp and (
                 my $precomped :=
                     self.load($id, :source($source), :checksum($dependency.checksum), :@precomp-stores) # already precompiled?
-                    or self.precompile($source, $id, :source-name($dependency.source-name), :force(nqp::hllbool(nqp::istype($precomped,Failure))), :@precomp-stores)
+                    or self.precompile($source, $id, :source-name($dependency.src), :force(nqp::hllbool(nqp::istype($precomped,Failure))), :@precomp-stores)
                     and self.load($id, :@precomp-stores) # if not do it now
             )
         );
