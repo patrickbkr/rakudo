@@ -439,7 +439,7 @@ sub MAIN(*@, *%) {
     proto method files(|) {*}
 
     # if we have to include :$name then we take the slow path
-    multi method files($file, Str:D :$name!, :$auth, :$ver, :$api, :$dist) {
+    multi method files($file, Str:D :$name!, :$auth, :$ver, :$api, Bool :$dist) {
         self.candidates(
           CompUnit::DependencySpecification.new:
             short-name      => $name,
@@ -461,7 +461,7 @@ sub MAIN(*@, *%) {
     }
 
     # avoid parsing json if we don't need to know the short-name
-    multi method files($file, :$auth, :$ver, :$api, :$dist) {
+    multi method files($file, :$auth, :$ver, :$api, Bool :$dist) {
         self.candidates(
           CompUnit::DependencySpecification.new:
             short-name      => $file,
