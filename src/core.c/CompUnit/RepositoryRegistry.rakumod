@@ -320,9 +320,9 @@ class CompUnit::RepositoryRegistry {
 
     method run-script($script) {
         my @installations = $*REPO.repo-chain.grep(CompUnit::Repository::Installation);
-        my @distros = @installations.map({ .files("bin/$script").head }).grep(*.defined);
+        my @distros = @installations.map({ .distributions("bin/$script").head }).grep(*.defined);
         unless +@distros {
-            my @metas = flat @installations.map({ .files("bin/$script").Slip }).grep(*.defined);
+            my @metas = flat @installations.map({ .distributions("bin/$script")».meta.Slip }).grep(*.defined);
             if +@metas {
                 note "===SORRY!===\n"
                     ~ "No candidate found for '$script' that match your criteria.\n"
