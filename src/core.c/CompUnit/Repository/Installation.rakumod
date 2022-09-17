@@ -56,7 +56,6 @@ class CompUnit::Repository::Installation does CompUnit::Repository::Locally does
         has $.dist-id;
         has $.read-dist;
         has $!installed-dist;
-        has $!repo-dist;
         has $.meta;
 
         # Parses dist info from json and populates $.meta with any new fields
@@ -73,12 +72,6 @@ class CompUnit::Repository::Installation does CompUnit::Repository::Locally does
             $!installed-dist;
         }
 
-        method !repo-dist {
-            ⚛$!repo-dist // cas $!repo-dist, {
-                $_ // CompUnit::Repository::Distribution.new(self)
-            }
-        }
-
         method meta(::?CLASS:D: --> Hash:D) {
             my %hash = $!meta.hash;
             unless $!installed-dist.defined {
@@ -88,13 +81,14 @@ class CompUnit::Repository::Installation does CompUnit::Repository::Locally does
                 %hash does LazyMetaReader({ $!meta.hash{$^a} // self!dist.meta.{$^a} });
 
                 # Allows absolutifying paths in .meta<files source> to keep
-                # .files() happy
+                # .files()/.distributions() happy
                 %hash does MetaAssigner({ $!meta.ASSIGN-KEY($^a, $^b) });
             }
 
             %hash;
         }
-        method Str(::?CLASS:D:) { self!repo-dist.Str }
+        method content(::?CLASS:D: $content-id --> IO::Handle:D) { self!dist.content($content-id) }
+        method Str(::?CLASS:D:) { CompUnit::Repository::Distribution.new(self).Str }
         method id(::?CLASS:D:) { $.dist-id }
     }
 
@@ -469,7 +463,7 @@ class CompUnit::Repository::Installation does CompUnit::Repository::Locally does
                     # wrappers are located in $bin-dir (only delete if no other
                     # versions use wrapper)
 
-                    unless self.files($name-path, :name(%meta<name>)).elems {
+                    unless self.distributions($name-path, :name(%meta<name>)).elems {
                         my $basename := $name-path.substr(4);  # skip bin/
                         my $bin-dir  := $prefix.add('bin');
                         unlink-if-exists($bin-dir.add($basename ~ $_))
@@ -500,7 +494,51 @@ class CompUnit::Repository::Installation does CompUnit::Repository::Locally does
     proto method files(|) {*}
 
     # if we have to include :$name then we take the slow path
-    multi method files($file, Str:D :$name!, :$auth, :$ver, :$api, Bool :$dist) {
+    multi method files($file, Str:D :$name!, :$auth, :$ver, :$api) {
+        self.candidates(
+          CompUnit::DependencySpecification.new:
+            short-name      => $name,
+            auth-matcher    => $auth,
+            version-matcher => $ver,
+            api-matcher     => $api,
+        ).map: {
+            my %meta := .meta;
+            if %meta<files> -> %files {
+                if %files{$file} -> $source {
+                    my $io := self!resources-dir.add($source);
+                    if $io.e {
+                        %meta<source> := $io;
+                        %meta
+                    }
+                }
+            }
+        }
+    }
+
+    # avoid parsing json if we don't need to know the short-name
+    multi method files($file, :$auth, :$ver, :$api) {
+        self.candidates(
+          CompUnit::DependencySpecification.new:
+            short-name      => $file,
+            auth-matcher    => $auth,
+            version-matcher => $ver,
+            api-matcher     => $api,
+        ).map: {
+            my %meta := .meta;
+            if %meta<source> || %meta<files>{$file} -> $source {
+                my $io := self!resources-dir.add($source);
+                if $io.e {
+                    %meta<source> := $io;
+                    %meta
+                }
+            }
+        }
+    }
+
+    proto method distributions(|) {*}
+
+    # if we have to include :$name then we take the slow path
+    multi method distributions($file, Str:D :$name!, :$auth, :$ver, :$api) {
         self.candidates(
           CompUnit::DependencySpecification.new:
             short-name      => $name,
@@ -514,7 +552,7 @@ class CompUnit::Repository::Installation does CompUnit::Repository::Locally does
                     my $io := self!resources-dir.add($source);
                     if $io.e {
                         %meta<source> := $io;
-                        $dist ?? $distribution !! %meta
+                        $distribution
                     }
                 }
             }
@@ -522,7 +560,7 @@ class CompUnit::Repository::Installation does CompUnit::Repository::Locally does
     }
 
     # avoid parsing json if we don't need to know the short-name
-    multi method files($file, :$auth, :$ver, :$api, Bool :$dist) {
+    multi method distributions($file, :$auth, :$ver, :$api) {
         self.candidates(
           CompUnit::DependencySpecification.new:
             short-name      => $file,
@@ -535,7 +573,7 @@ class CompUnit::Repository::Installation does CompUnit::Repository::Locally does
                 my $io := self!resources-dir.add($source);
                 if $io.e {
                     %meta<source> := $io;
-                    $dist ?? $distribution !! %meta
+                    $distribution
                 }
             }
         }
