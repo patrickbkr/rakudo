@@ -232,7 +232,8 @@ class CompUnit::Repository::FileSystem
 
         return ($distribution,);
     }
-    multi method candidates(:$file!, Str:D :$name!, :$auth, :$ver, :$api) {
+    multi method candidates(:$file! is copy, Str:D :$name!, :$auth, :$ver, :$api) {
+        $file = self!normalize-path($file);
         my $spec = CompUnit::DependencySpecification.new(
             short-name      => $name,
             auth-matcher    => $auth,
@@ -252,7 +253,8 @@ class CompUnit::Repository::FileSystem
             return $absolutified-metas
         }
     }
-    multi method candidates(:$file!, :$auth, :$ver, :$api) {
+    multi method candidates(:$file! is copy, :$auth, :$ver, :$api) {
+        $file = self!normalize-path($file);
         my $spec = CompUnit::DependencySpecification.new(
             short-name      => $file,
             auth-matcher    => $auth,
