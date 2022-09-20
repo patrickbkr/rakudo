@@ -600,7 +600,7 @@ class CompUnit::Repository::Installation does CompUnit::Repository::Locally does
     }
 
     # if we have to include :$name then we take the slow path
-    multi method candidates(:$file!, Str:D :$name!, :$auth, :$ver, :$api) {
+    multi method candidates(Str:D :$file!, Str:D :$name!, :$auth, :$ver, :$api) {
         self.candidates(
           CompUnit::DependencySpecification.new:
             short-name      => $name,
@@ -622,7 +622,7 @@ class CompUnit::Repository::Installation does CompUnit::Repository::Locally does
     }
 
     # avoid parsing json if we don't need to know the short-name
-    multi method candidates(:$file!, :$auth, :$ver, :$api) {
+    multi method candidates(Str:D :$file!, :$auth, :$ver, :$api) {
         self.candidates(
           CompUnit::DependencySpecification.new:
             short-name      => $file,
