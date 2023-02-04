@@ -6,7 +6,7 @@ class Rakudo::Supply {
     }
 
     class BlockAddWheneverAwaiter does Awaiter {
-        has $!continuations;
+        has $!delegate-awaiter is built;
 
         method await(Awaitable:D $a) {
             my $handle := $a.get-await-handle;
@@ -17,11 +17,13 @@ class Rakudo::Supply {
             }
             else {
                 my $reawaitable := CachedAwaitHandle.new(get-await-handle => $handle);
-                $!continuations := nqp::list() unless nqp::isconcrete($!continuations);
                 nqp::continuationcontrol(0, ADD_WHENEVER_PROMPT, nqp::getattr(-> Mu \c {
-                    nqp::push($!continuations, -> $delegate-awaiter {
+                    $*SCHEDULER.cue({
                         nqp::continuationinvoke(c, nqp::getattr({
-                            $delegate-awaiter.await($reawaitable);
+                            nqp::continuationreset(ADD_WHENEVER_PROMPT, nqp::getattr({
+                                my $*AWAITER := self;
+                                $!delegate-awaiter.await($reawaitable);
+                            }, Code, '$!do'));
                         }, Code, '$!do'));
                     });
                 }, Code, '$!do'));
@@ -29,25 +31,16 @@ class Rakudo::Supply {
         }
 
         method await-all(Iterable:D \i) {
-            $!continuations := nqp::list() unless nqp::isconcrete($!continuations);
             nqp::continuationcontrol(0, ADD_WHENEVER_PROMPT, nqp::getattr(-> Mu \c {
-                nqp::push($!continuations, -> $delegate-awaiter {
+                $*SCHEDULER.cue({
                     nqp::continuationinvoke(c, nqp::getattr({
-                        $delegate-awaiter.await-all(i);
+                        nqp::continuationreset(ADD_WHENEVER_PROMPT, nqp::getattr({
+                            my $*AWAITER := self;
+                            $!delegate-awaiter.await-all(i);
+                        }, Code, '$!do'));
                     }, Code, '$!do'));
                 });
             }, Code, '$!do'));
-        }
-
-        method take-all() {
-            if nqp::isconcrete($!continuations) {
-                my \result = $!continuations;
-                $!continuations := Mu;
-                result
-            }
-            else {
-                Empty
-            }
         }
     }
 
@@ -73,7 +66,7 @@ class Rakudo::Supply {
             $!active = 1;
             $!lock := Lock.new;
             $!run-async-lock := Lock::Async.new;
-            $!awaiter := BlockAddWheneverAwaiter.CREATE;
+            $!awaiter := BlockAddWheneverAwaiter.new: delegate-awaiter => $*AWAITER;
             self
         }
 
@@ -238,8 +231,7 @@ class Rakudo::Supply {
         }
 
         method !run-supply-code(&code, \value, BlockState $state, &add-whenever, $tap) {
-            my @run-after;
-            my $queued := $state.run-async-lock.protect-or-queue-on-recursion: {
+            $state.run-async-lock.protect-or-queue-on-recursion: {
                 my &*ADD-WHENEVER := &add-whenever;
                 $state.active > 0 and nqp::handle(code(value),
                     'EMIT', $state.run-emit(),
@@ -247,27 +239,6 @@ class Rakudo::Supply {
                     'CATCH', $state.run-catch(),
                     'LAST', $state.run-last($tap, &code),
                     'NEXT', 0);
-                @run-after = $state.awaiter.take-all;
-            }
-            if $queued.defined {
-                $queued.then({ self!run-add-whenever-awaits(@run-after) });
-            }
-            else {
-                self!run-add-whenever-awaits(@run-after);
-            }
-        }
-
-        method !run-add-whenever-awaits(@run-after --> Nil) {
-            if @run-after {
-                my $nested-awaiter := BlockAddWheneverAwaiter.CREATE;
-                my $delegate-awaiter := $*AWAITER;
-                while @run-after.elems {
-                    my $*AWAITER := $nested-awaiter;
-                    nqp::continuationreset(ADD_WHENEVER_PROMPT, nqp::getattr({
-                        @run-after.shift()($delegate-awaiter);
-                    }, Code, '$!do'));
-                    @run-after.append($nested-awaiter.take-all);
-                }
             }
         }
 
