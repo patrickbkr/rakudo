@@ -45,6 +45,9 @@ pushd zef
 ../install/bin/raku -I. bin/zef install .
 popd
 
+echo "========= Installing Terminal::ReadLine"
+install/bin/zef install Terminal::ReadLine
+
 echo "========= Copying auxiliary files"
 cp -r tools/build/binary-release/assets/Linux/* install
 cp LICENSE install

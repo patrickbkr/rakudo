@@ -59,6 +59,10 @@ cd zef
 CheckLastExitCode
 cd ..
 
+echo "========= Installing Terminal::ReadLine"
+install\bin\zef install "Terminal::ReadLine"
+CheckLastExitCode
+
 echo "========= Copying auxiliary files"
 cp -Force -r "tools\build\binary-release\assets\Windows\*" install
 cp LICENSE install
