@@ -308,9 +308,9 @@ class CompUnit::RepositoryRegistry {
 
     method run-script($script) {
         my @installations = $*REPO.repo-chain.grep(CompUnit::Repository::Installation);
-        my @metas = @installations.map({ .files("bin/$script").head }).grep(*.defined);
-        unless +@metas {
-            @metas = flat @installations.map({ .files("bin/$script").Slip }).grep(*.defined);
+        my @distros = @installations.map({ .candidates(:file("bin/$script")).head }).grep(*.defined);
+        unless +@distros {
+            my @metas = flat @installations.map({ .candidates(:file("bin/$script"))».meta.Slip }).grep(*.defined);
             if +@metas {
                 note "===SORRY!===\n"
                     ~ "No candidate found for '$script' that match your criteria.\n"
@@ -332,8 +332,9 @@ class CompUnit::RepositoryRegistry {
             exit 1;
         }
 
-        my $meta = @metas.sort(*.<ver>).sort(*.<api>).reverse.head;
-        my $bin  = $meta<source>;
+        my $distro = @distros.sort(*.meta<ver>).sort(*.meta<api>).reverse.head;
+        my $bin  = $distro.meta<source>;
+        my $*DISTRIBUTION := $distro;
         require "$bin";
     }
 

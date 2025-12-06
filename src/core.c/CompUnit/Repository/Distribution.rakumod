@@ -46,6 +46,9 @@ class CompUnit::Repository::Distribution does Distribution {
             my $spec := %data<repo>;  # XXX badly named field?
             my $id   := %data<dist-id>;
 
+            # TODO try if it works without this line!
+            return Nil unless $name || $spec;
+
             my $repo := $name
               ?? CompUnit::RepositoryRegistry.repository-for-name($name)
               !! CompUnit::RepositoryRegistry.repository-for-spec($spec);

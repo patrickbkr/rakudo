@@ -477,6 +477,9 @@ class Perl6::World is HLL::World {
     # To temporarily keep fixup task QAST.
     has $!setting_fixup_task;
 
+    # Will be set to a Distribution instance if current compunit belongs to any.
+    has $!distribution;
+
     has int $!in_unit_parse;
     has int $!have_outer;
     has int $!setting_loaded;
@@ -661,6 +664,12 @@ class Perl6::World is HLL::World {
                         !! $default_revision );
             }
             $*UNIT.annotate('IN_DECL', 'mainline');
+        }
+
+        unless $*COMPILING_CORE_SETTING {
+            self.install_lexical_symbol(
+                $*UNIT, '$?DISTRIBUTION',
+                nqp::ifnull(self.current_distribution(), self.find_single_symbol_in_setting('Nil')));
         }
 
         # Unit compilation started
@@ -1372,6 +1381,30 @@ class Perl6::World is HLL::World {
 
     method current_line($/) {
         HLL::Compiler.lineof($/.orig,$/.from,:cache(1));
+    }
+
+    method current_distribution() {
+        unless nqp::isconcrete($!distribution) || nqp::isnull($!distribution) {
+            my $distribution := nqp::null();
+            unless $*COMPILING_CORE_SETTING || nqp::getenvhash<RAKUDO_NO_PRECOMP_DIST> {
+                # If this compunit is an EVALed code then its calling context must have the distribution object already
+                $distribution :=
+                    $*INSIDE-EVAL && nqp::isconcrete(%*COMPILING<%?OPTIONS><outer_ctx>)
+                        ?? nqp::getlexrel(%*COMPILING<%?OPTIONS><outer_ctx>, '$?DISTRIBUTION')
+                        !! nqp::getlexdyn('$*DISTRIBUTION');
+                # Locating distribution by file name makes no sense inside EVAL.
+                unless nqp::isconcrete($distribution) || $*INSIDE-EVAL {
+                    my $CURD := self.find_symbol(['CompUnit', 'Repository', 'Distribution']);
+                    my $CURFS := self.find_symbol(['CompUnit', 'Repository', 'FileSystem']);
+                    $distribution :=
+                        $CURD.from-precomp()
+                        || $CURFS.distribution-for-file(self.current_file())
+                        || nqp::null();
+                }
+            }
+            $!distribution := $distribution;
+        }
+        $!distribution
     }
 
     method arglist($/) {

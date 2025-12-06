@@ -235,23 +235,11 @@ class CompUnit::Repository::FileSystem
 
     proto method files(|) {*}
     multi method files($file, Str:D :$name!, :$auth, :$ver, :$api) {
-        my $spec = CompUnit::DependencySpecification.new(
-            short-name      => $name,
-            auth-matcher    => $auth,
-            version-matcher => $ver,
-            api-matcher     => $api,
-        );
-
-        with self.candidates($spec) {
-            my $matches := $_.grep: { .meta<files>{$file}:exists }
-
-            my $absolutified-metas := $matches.map: {
-                my $meta      = $_.meta;
-                $meta<source> = $!prefix.add($meta<files>{$file});
-                $meta;
-            }
-
-            return $absolutified-metas.grep(*.<source>.e);
+        my @candidates = self!candidates($file, :$name, :$auth, :$ver, :$api);
+        @candidates.map: {
+            my $meta      = $_.meta;
+            $meta<source> = $!prefix.add($meta<files>{$file});
+            $meta
         }
     }
     multi method files($file, :$auth, :$ver, :$api) {
@@ -392,6 +380,39 @@ class CompUnit::Repository::FileSystem
                 :store(self.precomp-store),
             )
         }
+    }
+
+    method !candidates(Str:D :$file!, Str:D :$name!, :$auth, :$ver, :$api) {
+        my $spec = CompUnit::DependencySpecification.new(
+            short-name      => $name,
+            auth-matcher    => $auth,
+            version-matcher => $ver,
+            api-matcher     => $api,
+        );
+
+        with self.candidates($spec) {
+            .grep: {
+                .meta<files>{$file}:exists &&
+                $!prefix.add(.meta<files>{$file}).e
+            }
+        }
+    }
+
+    # Try to locate a distribution by a given file name. Only makes sense for CURFS.
+    # $file is expected to be either absolute or relative to $*CWD.
+    method distribution-for-file(::?CLASS:U:
+      Str $file, :$name, :$ver, :$auth, :$api
+    --> CompUnit::Repository::Distribution:D) {
+        my @curfses = $*REPO.repo-chain.grep(CompUnit::Repository::FileSystem);
+        my @distros =
+            @curfses.map({
+                $_!candidates(
+                    :file($file.IO.resolve.relative($.abspath)),
+                    :$name, :$auth, :$api).head
+            }).grep(*.defined);
+        +@distros
+            ?? (@distros == 1 ?? @distros !! @distros.sort(*.meta<ver>).sort(*.meta<api>).reverse).head
+            !! Nil
     }
 }
 

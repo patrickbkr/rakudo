@@ -544,6 +544,28 @@ class CompUnit::Repository::Installation does CompUnit::Repository::Locally does
             version-matcher => $ver,
             api-matcher     => $api,
     }
+
+    # avoid parsing json if we don't need to know the short-name
+    # TODO Validate if this matches the `files` method.
+    # TODO make this private and move `run-script` here.
+    multi method candidates(Str:D :$file!, :$auth, :$ver, :$api) {
+        self.candidates(
+          CompUnit::DependencySpecification.new:
+            short-name      => $file,
+            auth-matcher    => $auth,
+            version-matcher => $ver,
+            api-matcher     => $api,
+        ).map: -> $distribution {
+            my %meta := $distribution.meta;
+            if %meta<source> || %meta<files>{$file} -> $source {
+                my $io := self!resources-dir.add($source);
+                if $io.e {
+                    %meta<source> := $io;
+                    $distribution
+                }
+            }
+        }
+    }
     multi method candidates(CompUnit::DependencySpecification:D $spec) {
         if $spec.from eq 'Raku' | 'Perl6'
           # $lookup is a file system resource that acts as a fast meta data
